@@ -22,4 +22,4 @@ WORKDIR /app
 # -w 2 → 2 workers (suficiente para plan free, ajusta si usas plan pagado)
 # --threads 4 → threads por worker (opcional, pero ayuda con I/O)
 # --bind 0.0.0.0:$PORT → OBLIGATORIO para Render
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "2", "--threads", "4", "app_unificado:app"]
+CMD exec gunicorn --bind=0.0.0.0:$PORT --workers=2 --threads=4 app_unificado:app
