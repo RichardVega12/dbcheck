@@ -41,7 +41,7 @@ APP_CONFIG = {
         'MAESTRO_HIS_PAIS.csv': {'cols': ['Id_Pais', 'Descripcion_Pais'], 'merge_on': 'Id_Pais', 'use_custom_load': True},
         'MAESTRO_HIS_CIE_CPMS.csv': {'cols': ['Codigo_Item', 'Descripcion_Item'], 'merge_on': 'Codigo_Item', 'use_custom_load': True},
         'MAESTRO_HIS_UPS.csv': {'cols': ['Id_Ups', 'Descripcion_Ups'], 'merge_on': 'Id_Ups', 'use_custom_load': True},
-        'MAESTRO_HIS_OTRA_CONDicion.csv': {'cols': ['Id_Otra_Condicion', 'Descripcion_Otra_Condicion'], 'merge_on': 'Id_Otra_Condicion'},
+        'MAESTRO_HIS_OTRA_CONDICION.csv': {'cols': ['Id_Otra_Condicion', 'Descripcion_Otra_Condicion'], 'merge_on': 'Id_Otra_Condicion'},
         'MAESTRO_HIS_PROFESION.csv': {'cols': ['Id_Profesion', 'Descripcion_Profesion'], 'merge_on': 'Id_Profesion'},
         'MAESTRO_HIS_CONDICION_CONTRATO.csv': {'cols': ['Id_Condicion', 'Descripcion_Condicion'], 'merge_on': 'Id_Condicion'},
         'MAESTRO_HIS_COLEGIO.csv': {'cols': ['Id_Colegio', 'Descripcion_Colegio'], 'merge_on': 'Id_Colegio'},
