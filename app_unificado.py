@@ -1008,172 +1008,119 @@ def validar():
 @app.route('/upload_consolidar', methods=['POST'])
 def upload_consolidar():
     global df_global
-    
+
     if 'files[]' not in request.files:
-        flash('No se seleccionaron archivos', 'error')
-        return redirect(url_for('consolidar'))
-    
+        return "Error: No se seleccionaron archivos", 400
+
     files = request.files.getlist('files[]')
     if not files or all(f.filename == '' for f in files):
-        flash('No se seleccionaron archivos', 'error')
-        return redirect(url_for('consolidar'))
+        return "Error: No se seleccionaron archivos válidos", 400
 
     # OBTENER FORMATO DE EXPORTACIÓN
     export_format = request.form.get('export_format', 'xlsx')  # Por defecto Excel
 
     uploaded_files_paths = []
-    file_info = []
     temp_dirs_to_cleanup = []
 
-    for file in files:
-        if file.filename == '':
-            continue
-
-        if file.filename.lower().endswith('.zip'):
-            try:
-                temp_dir = tempfile.mkdtemp(prefix='zip_extract_', dir=UPLOAD_FOLDER)
-                temp_dirs_to_cleanup.append(temp_dir)
-
-                with zipfile.ZipFile(file.stream, 'r') as zip_ref:
-                    zip_ref.extractall(temp_dir)
-                    app.logger.info(f"ZIP extraído en: {temp_dir}")
-
-                for root, dirs, filenames in os.walk(temp_dir):
-                    for filename in filenames:
-                        if filename.lower().endswith('.csv'):
-                            csv_path = os.path.join(root, filename)
-                            uploaded_files_paths.append(csv_path)
-
-                            file_type = identify_dynamic_master(csv_path)
-                            if file_type == 'plano':
-                                file_info.append(f"{filename} (Plano desde ZIP)")
-                            elif file_type:
-                                file_info.append(f"{filename} (Maestro {file_type.capitalize()} desde ZIP)")
-                            else:
-                                file_info.append(f"{filename} (desde ZIP)")
-
-            except zipfile.BadZipFile:
-                flash(f"Error: {file.filename} no es un ZIP válido.", "error")
-                limpiar_archivos_especificos(uploaded_files_paths)
-                for d in temp_dirs_to_cleanup:
-                    if os.path.exists(d):
-                        shutil.rmtree(d, ignore_errors=True)
-                return redirect(url_for('consolidar'))
-            except Exception as e:
-                flash(f"Error al procesar ZIP {file.filename}: {e}", "error")
-                app.logger.error(f"Error procesando ZIP: {e}")
+    try:
+        for file in files:
+            if file.filename == '':
                 continue
 
-        elif file.filename.lower().endswith('.csv'):
-            filepath = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
-            try:
+            if file.filename.lower().endswith('.zip'):
+                try:
+                    temp_dir = tempfile.mkdtemp(prefix='zip_extract_', dir=UPLOAD_FOLDER)
+                    temp_dirs_to_cleanup.append(temp_dir)
+                    with zipfile.ZipFile(file.stream, 'r') as zip_ref:
+                        zip_ref.extractall(temp_dir)
+                        app.logger.info(f"ZIP extraído en: {temp_dir}")
+
+                    for root, _, filenames in os.walk(temp_dir):
+                        for filename in filenames:
+                            if filename.lower().endswith('.csv'):
+                                csv_path = os.path.join(root, filename)
+                                uploaded_files_paths.append(csv_path)
+                except zipfile.BadZipFile:
+                    return f"Error: {file.filename} no es un ZIP válido.", 400
+                except Exception as e:
+                    app.logger.error(f"Error procesando ZIP {file.filename}: {e}")
+                    return f"Error al procesar ZIP {file.filename}: {str(e)}", 400
+
+            elif file.filename.lower().endswith('.csv'):
+                filepath = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
                 file.save(filepath)
                 uploaded_files_paths.append(filepath)
 
-                file_type = identify_dynamic_master(filepath)
-                if file_type == 'plano':
-                    file_info.append(f"{file.filename} (Archivo Plano/Trama/Nominal)")
-                elif file_type:
-                    file_info.append(f"{file.filename} (Maestro {file_type.capitalize()})")
-                else:
-                    file_info.append(f"{file.filename} (Tipo no identificado)")
+            else:
+                app.logger.warning(f"Archivo ignorado (no es .csv ni .zip): {file.filename}")
 
-            except Exception as e:
-                flash(f"Error al guardar {file.filename}: {e}", "error")
-                app.logger.error(f"Error al guardar CSV: {e}")
-                limpiar_archivos_especificos(uploaded_files_paths)
-                for d in temp_dirs_to_cleanup:
-                    if os.path.exists(d):
-                        shutil.rmtree(d, ignore_errors=True)
-                return redirect(url_for('consolidar'))
+        if not uploaded_files_paths:
+            return "Error: No se encontraron archivos .csv válidos dentro de los ZIPs o subidos.", 400
 
-        else:
-            flash(f"Advertencia: {file.filename} no es .csv ni .zip. Ignorado.", "warning")
+        app.logger.info(f"Total de CSVs a procesar: {len(uploaded_files_paths)}")
 
-    if not uploaded_files_paths:
-        flash('No se encontraron archivos .csv válidos.', 'error')
-        for d in temp_dirs_to_cleanup:
-            if os.path.exists(d):
-                shutil.rmtree(d, ignore_errors=True)
-        return redirect(url_for('consolidar'))
-
-    for info in file_info:
-        flash(info, 'info')
-
-    app.logger.info(f"Total de CSVs a procesar: {len(uploaded_files_paths)}")
-
-    try:
+        # PROCESAR Y GENERAR CONSOLIDADO
         consolidated_df = generate_consolidated_data(uploaded_files_paths)
-        if consolidated_df is not None:
-            # GUARDAR EN MEMORIA PARA VALIDACIÓN DIRECTA (se mantiene pero sin la opción de validación directa)
-            df_global = consolidated_df.copy()
-            app.logger.info(f"✅ DataFrame guardado en memoria para validación: {df_global.shape}")
-            
-            # EXPORTACIÓN CONDICIONAL SEGÚN FORMATO SELECCIONADO
-            if export_format == 'csv':
-                # Exportar como CSV CON UTF-8 BOM para correcta visualización
-                output_filename = "Consolidado_Final.csv"
-                output_buffer = io.BytesIO()
-                
-                # Exportar DataFrame a CSV con UTF-8 BOM
-                csv_content = consolidated_df.to_csv(index=False, encoding='utf-8-sig')
-                output_buffer.write(csv_content.encode('utf-8-sig'))
-                output_buffer.seek(0)
-                
-                mimetype = 'text/csv; charset=utf-8'
-                
-            else:  # Por defecto Excel
-                # Exportar como Excel (comportamiento original)
-                output_filename = "Consolidado_Final.xlsx"
-                output_buffer = io.BytesIO()
-                
-                # FORMATOS PERSONALIZADOS
-                date_only_format = 'yyyy-mm-dd'
-                datetime_format = 'yyyy-mm-dd hh:mm:ss'
 
-                with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
-                    consolidated_df.to_excel(writer, index=False, sheet_name='Consolidado')
-                    workbook = writer.book
-                    sheet = writer.sheets['Consolidado']
+        if consolidated_df is None or consolidated_df.empty:
+            return "Error: No se pudo generar el consolidado (posiblemente falta archivo de trama/plano).", 500
 
-                    for col_name in DATE_COLUMNS:
-                        if col_name in consolidated_df.columns:
-                            col_idx = consolidated_df.columns.get_loc(col_name) + 1
-                            fmt = datetime_format if col_name in ['Fecha_Registro', 'Fecha_Modificacion'] else date_only_format
-                            for row_idx in range(2, sheet.max_row + 1):
-                                cell = sheet.cell(row=row_idx, column=col_idx)
-                                if isinstance(cell.value, pd.Timestamp):
-                                    cell.number_format = fmt
+        # GUARDAR EN MEMORIA (para validación futura si la implementas)
+        df_global = consolidated_df.copy()
+        app.logger.info(f"✅ DataFrame consolidado guardado en memoria: {df_global.shape}")
 
-                output_buffer.seek(0)
-                mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        # GENERAR ARCHIVO SEGÚN FORMATO
+        if export_format == 'csv':
+            output_filename = "Consolidado_Final.csv"
+            output_buffer = io.BytesIO()
+            csv_content = consolidated_df.to_csv(index=False, encoding='utf-8-sig')
+            output_buffer.write(csv_content.encode('utf-8-sig'))
+            output_buffer.seek(0)
+            mimetype = 'text/csv; charset=utf-8'
 
-            limpiar_archivos_especificos(uploaded_files_paths)
-            for temp_dir in temp_dirs_to_cleanup:
-                if os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir, ignore_errors=True)
-                    app.logger.info(f"Directorio temporal eliminado: {temp_dir}")
+        else:  # Excel por defecto
+            output_filename = "Consolidado_Final.xlsx"
+            output_buffer = io.BytesIO()
+            date_only_format = 'yyyy-mm-dd'
+            datetime_format = 'yyyy-mm-dd hh:mm:ss'
+            with pd.ExcelWriter(output_buffer, engine='openpyxl') as writer:
+                consolidated_df.to_excel(writer, index=False, sheet_name='Consolidado')
+                workbook = writer.book
+                sheet = writer.sheets['Consolidado']
+                for col_name in DATE_COLUMNS:
+                    if col_name in consolidated_df.columns:
+                        col_idx = consolidated_df.columns.get_loc(col_name) + 1
+                        fmt = datetime_format if col_name in ['Fecha_Registro', 'Fecha_Modificacion'] else date_only_format
+                        for row_idx in range(2, sheet.max_row + 1):
+                            cell = sheet.cell(row=row_idx, column=col_idx)
+                            if isinstance(cell.value, pd.Timestamp):
+                                cell.number_format = fmt
+            output_buffer.seek(0)
+            mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-            return send_file(
-                output_buffer,
-                mimetype=mimetype,
-                as_attachment=True,
-                download_name=output_filename
-            )
-        else:
-            flash("No se pudo generar el consolidado.", "error")
-
-    except Exception as e:
-        flash(f"Error en consolidación: {e}", "error")
-        app.logger.error(f"Error: {traceback.format_exc()}")
-
-    finally:
+        # LIMPIAR ARCHIVOS TEMPORALES (solo si todo salió bien)
         limpiar_archivos_especificos(uploaded_files_paths)
         for temp_dir in temp_dirs_to_cleanup:
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir, ignore_errors=True)
+                app.logger.info(f"Directorio temporal eliminado: {temp_dir}")
 
-    return redirect(url_for('consolidar'))
+        # DEVOLVER EL ARCHIVO REAL
+        return send_file(
+            output_buffer,
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=output_filename
+        )
+
+    except Exception as e:
+        app.logger.error(f"Error inesperado en consolidación: {traceback.format_exc()}")
+        # Limpiar en caso de error
+        limpiar_archivos_especificos(uploaded_files_paths)
+        for temp_dir in temp_dirs_to_cleanup:
+            if os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+        return f"Error interno del servidor: {str(e)}", 500
 
 # --- RUTAS PARA VALIDACIÓN DE ERRORES ---
 @app.route('/upload_validar', methods=['POST'])
