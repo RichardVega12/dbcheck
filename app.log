@@ -1,0 +1,8 @@
+2025-11-11 13:48:12,814 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:12] "GET / HTTP/1.1" 200 -
+2025-11-11 13:48:12,901 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:12] "[36mGET /static/image/fondo.jpg HTTP/1.1[0m" 304 -
+2025-11-11 13:48:14,062 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:14] "GET /consolidar HTTP/1.1" 200 -
+2025-11-11 13:48:21,754 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:21] "[32mPOST /upload_consolidar HTTP/1.1[0m" 302 -
+2025-11-11 13:48:21,758 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:21] "GET /consolidar HTTP/1.1" 200 -
+2025-11-11 13:48:27,585 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:27] "[32mPOST /upload_consolidar HTTP/1.1[0m" 302 -
+2025-11-11 13:48:27,589 - INFO - 127.0.0.1 - - [11/Nov/2025 13:48:27] "GET /consolidar HTTP/1.1" 200 -
+2025-11-11 16:09:06,644 - WARNING - Archivo no encontrado: data/MAESTRO_HIS_MINSA.csv

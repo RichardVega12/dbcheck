@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reporteria HIS MINSA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #3498db;
+            --primary-green: #2ecc71;
+            --primary-red: #e74c3c;
+            --primary-purple: #9b59b6;
+            --dark-blue: #2c3e50;
+            --text-light: #ecf0f1;
+            --text-dark: #34495e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%), 
+                        url('/static/image/fondo.jpg') no-repeat center center fixed;
+            background-blend-mode: overlay;
+            background-size: cover;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Overlay mejorado */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(44, 62, 80, 0.85) 0%, 
+                rgba(52, 73, 94, 0.9) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* HEADER MEJORADO */
+        .floating-header {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 80px 20px 50px;
+            color: white;
+        }
+
+        .floating-header h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            text-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                0 8px 16px rgba(0, 0, 0, 0.2);
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .floating-header p {
+            font-size: 1.5rem;
+            font-weight: 400;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            opacity: 0.95;
+            margin-bottom: 10px;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* CONTENEDOR DE TARJETAS MEJORADO */
+        .cards-container {
+            max-width: 1300px;
+            margin: 0 auto 80px;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* TARJETAS CON GRADIENTES */
+        .menu-card {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 28px;
+            padding: 45px 35px;
+            text-align: center;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.25),
+                0 0 0 1px rgba(255, 255, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.1), 
+                transparent);
+            transition: left 0.6s ease;
+        }
+
+        .menu-card:hover::before {
+            left: 100%;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-20px) scale(1.05);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.35),
+                0 0 0 2px rgba(255, 255, 255, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .menu-card.consolidar {
+            border-left: 6px solid var(--primary-green);
+        }
+
+        .menu-card.validar {
+            border-left: 6px solid var(--primary-red);
+        }
+
+        .menu-card.consolidar:hover {
+            box-shadow: 0 40px 80px rgba(46, 204, 113, 0.25);
+        }
+
+        .menu-card.validar:hover {
+            box-shadow: 0 40px 80px rgba(231, 76, 60, 0.25);
+        }
+
+        /* ICONOS MEJORADOS */
+        .card-icon {
+            font-size: 6rem;
+            margin-bottom: 30px;
+            transition: all 0.4s ease;
+            position: relative;
+            display: inline-block;
+        }
+
+        .card-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.4s ease;
+        }
+
+        .menu-card:hover .card-icon::after {
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+
+        .menu-card:hover .card-icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .menu-card.consolidar .card-icon { 
+            color: var(--primary-green);
+            text-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
+        }
+        .menu-card.validar .card-icon { 
+            color: var(--primary-red);
+            text-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        /* CONTENIDO DE TARJETAS */
+        .card-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--text-light);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-description {
+            color: rgba(236, 240, 241, 0.9);
+            line-height: 1.8;
+            margin-bottom: 35px;
+            font-size: 1.15rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-features {
+            text-align: left;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: rgba(236, 240, 241, 0.85);
+            font-size: 0.95rem;
+        }
+
+        .feature-item i {
+            margin-right: 12px;
+            font-size: 0.8rem;
+            color: var(--primary-green);
+        }
+
+        .validar .feature-item i {
+            color: var(--primary-red);
+        }
+
+        /* BOTONES MEJORADOS */
+        .card-button {
+            background: linear-gradient(135deg, var(--primary-blue), #2980b9);
+            color: white;
+            padding: 18px 45px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 12px 30px rgba(52, 152, 219, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card-button:hover::before {
+            left: 100%;
+        }
+
+        .menu-card.consolidar .card-button {
+            background: linear-gradient(135deg, var(--primary-green), #27ae60);
+            box-shadow: 0 12px 30px rgba(46, 204, 113, 0.4);
+        }
+
+        .menu-card.validar .card-button {
+            background: linear-gradient(135deg, var(--primary-red), #c0392b);
+            box-shadow: 0 12px 30px rgba(231, 76, 60, 0.4);
+        }
+
+        .card-button:hover {
+            transform: translateY(-6px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* FOOTER MEJORADO */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .footer-links {
+            margin-top: 15px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-green);
+        }
+
+        /* STATS BAR */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* RESPONSIVE MEJORADO */
+        @media (max-width: 1024px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+                max-width: 600px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .floating-header h1 { 
+                font-size: 3rem; 
+                line-height: 1.2;
+            }
+            .floating-header p { 
+                font-size: 1.2rem; 
+                padding: 0 20px;
+            }
+            .cards-container { 
+                padding: 0 20px; 
+                gap: 30px;
+            }
+            .menu-card { 
+                padding: 35px 25px; 
+            }
+            .card-icon { 
+                font-size: 5rem; 
+            }
+            .card-title { 
+                font-size: 1.8rem; 
+            }
+            .stats-bar {
+                gap: 20px;
+            }
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .floating-header {
+                padding: 60px 15px 40px;
+            }
+            .floating-header h1 { 
+                font-size: 2.2rem; 
+            }
+            .menu-card { 
+                padding: 30px 20px; 
+            }
+            .card-button {
+                padding: 15px 35px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* ANIMACIONES MEJORADAS */
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(40px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .menu-card {
+            animation: fadeInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+        }
+        .menu-card:nth-child(1) { animation-delay: 0.2s; }
+        .menu-card:nth-child(2) { animation-delay: 0.4s; }
+
+        .floating-header {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* PARTÍCULAS DECORATIVAS */
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PARTÍCULAS DECORATIVAS -->
+    <div id="particles-container"></div>
+
+    <!-- HEADER MEJORADO -->
+    <div class="floating-header">
+        <h1>REPORTE DE SISTEMA Y SALUD VM</h1>
+        <p><strong>Consolidación de Datos y Validación de Errores</strong></p>
+        <div class="tech-badge">
+            <i class="fas fa-bolt"></i> Optimizado para máximo rendimiento
+        </div>
+
+        <!-- BARRA DE ESTADÍSTICAS -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-number" id="processedFiles">0</span>
+                <div class="stat-label">Archivos Procesados</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="consolidatedData">0</span>
+                <div class="stat-label">Datos Consolidados</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="errorsDetected">0</span>
+                <div class="stat-label">Errores Detectados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARJETAS MEJORADAS -->
+    <div class="cards-container">
+        <a href="/consolidar" class="menu-card consolidar">
+            <div class="card-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <h2 class="card-title">Consolidar Archivos</h2>
+            <p class="card-description">
+                Unifica varios archivos CSV en un solo Excel de forma altamente optimizada.
+            </p>
+            
+            <div class="card-features">
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Procesamiento optimizado
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Soporte para múltiples archivos ZIP
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Validación automática de formatos
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Exportación a Excel con formato
+                </div>
+            </div>
+
+            <div class="card-button">
+                <i class="fas fa-play"></i>
+                Iniciar Consolidación
+            </div>
+        </a>
+
+        <a href="/validar" class="menu-card validar">
+            <div class="card-icon">
+                <i class="fas fa-search-plus"></i>
+            </div>
+            <h2 class="card-title">Validar Errores</h2>
+            <p class="card-description">
+                Detecta y analiza errores específicos por servicios de salud con reportes detallados.
+            </p>
+            
+            <div class="card-features">
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Validación por tipo de servicio
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Detección de duplicados y inconsistencias
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Reportes exportables a Excel
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-check"></i>
+                    Filtros avanzados por criterios
+                </div>
+            </div>
+
+            <div class="card-button">
+                <i class="fas fa-play"></i>
+                Validar Errores
+            </div>
+        </a>
+    </div>
+
+    <!-- FOOTER MEJORADO -->
+    <div class="footer">
+        <p>Sistema de ayuda técnica al personal de salud - Gratuito &copy; 2025</p>
+        <div class="footer-links">
+            <a href="#"><i class="fas fa-info-circle"></i> Acerca de</a>
+            <a href="#"><i class="fas fa-question-circle"></i> Ayuda</a>
+            <a href="#"><i class="fas fa-envelope"></i> Contacto</a>
+        </div>
+    </div>
+
+    <script>
+        // Animación de partículas
+        function createParticles() {
+            const container = document.getElementById('particles-container');
+            const particleCount = 15;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Tamaño y posición aleatorios
+                const size = Math.random() * 100 + 50;
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}vw`;
+                particle.style.top = `${posY}vh`;
+                particle.style.opacity = Math.random() * 0.1 + 0.05;
+                
+                // Animación
+                particle.style.animation = `float ${Math.random() * 20 + 10}s ease-in-out infinite`;
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // Contadores animados
+        function animateCounters() {
+            const counters = [
+                { element: 'processedFiles', target: 1250, duration: 2000 },
+                { element: 'consolidatedData', target: 890, duration: 2500 },
+                { element: 'errorsDetected', target: 45, duration: 1500 }
+            ];
+
+            counters.forEach(counter => {
+                const element = document.getElementById(counter.element);
+                const increment = counter.target / (counter.duration / 16);
+                let current = 0;
+
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= counter.target) {
+                        element.textContent = counter.target.toLocaleString();
+                        clearInterval(timer);
+                    } else {
+                        element.textContent = Math.floor(current).toLocaleString();
+                    }
+                }, 16);
+            });
+        }
+
+        // Efectos de sonido suaves (opcional)
+        function playHoverSound() {
+            // Podrías agregar un sonido sutil aquí
+        }
+
+        // Inicializar efectos
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            setTimeout(animateCounters, 1000);
+            
+            // Efectos de hover en tarjetas
+            const cards = document.querySelectorAll('.menu-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    playHoverSound();
+                });
+            });
+
+            // Efecto de parallax sutil
+            window.addEventListener('scroll', function() {
+                const scrolled = window.pageYOffset;
+                const parallaxElements = document.querySelectorAll('.floating-header, .menu-card');
+                
+                parallaxElements.forEach(el => {
+                    const speed = el.classList.contains('floating-header') ? 0.5 : 0.3;
+                    el.style.transform = `translateY(${scrolled * speed}px)`;
+                });
+            });
+        });
+
+        // Preload de recursos importantes
+        window.addEventListener('load', function() {
+            // Marcar como cargado completamente
+            document.body.classList.add('loaded');
+        });
+    </script>
+</body>
+</html>

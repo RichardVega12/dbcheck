@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - SECRET_KEY=supersecreto123
+      - REDIS_URL=redis://redis:6379
+      - FLASK_DEBUG=true  # ✅ Activa modo desarrollo
+      - FLASK_APP=app_unificado.py
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"

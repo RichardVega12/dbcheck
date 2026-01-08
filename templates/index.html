@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consolidador HIS MINSA</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .menu-button { 
+            position: fixed; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 1000; 
+        }
+        
+        .menu-button a { 
+            background: #3498db; 
+            color: white; 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            box-shadow: 0 4px 15px rgba(52,152,219,0.3); 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            transition: all 0.3s ease;
+        }
+        
+        .menu-button a:hover { 
+            background: #2980b9; 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(52,152,219,0.4);
+        }
+        
+        .container { 
+            max-width: 900px; 
+            margin: 80px auto 0; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        h1 { 
+            color: #2c3e50; 
+            margin-bottom: 10px; 
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        .subtitle { 
+            color: #7f8c8d; 
+            font-size: 1.1em; 
+            font-weight: 400;
+        }
+        
+        .instructions { 
+            background: #f8f9fa; 
+            border-left: 4px solid #3498db;
+            border-radius: 8px; 
+            padding: 25px; 
+            margin-bottom: 30px; 
+        }
+        
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .instructions ul {
+            list-style-type: none;
+            margin: 15px 0;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .instructions li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .instructions code {
+            background: #e8f4fc;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #2c3e50;
+        }
+        
+        .instructions p {
+            margin-top: 15px;
+            color: #5a6c7d;
+            font-style: italic;
+        }
+        
+        .upload-area { 
+            border: 2px dashed #bdc3c7; 
+            border-radius: 12px; 
+            padding: 40px; 
+            text-align: center; 
+            background: #fafbfc; 
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+        
+        .upload-area:hover { 
+            border-color: #3498db; 
+            background: #f0f7ff; 
+        }
+        
+        .upload-area.dragover { 
+            border-color: #27ae60; 
+            background: #f0fff4; 
+        }
+        
+        .upload-area h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+        
+        .upload-area p {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+        }
+        
+        .format-selector {
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .format-selector label {
+            font-weight: 600;
+            margin-right: 10px;
+            color: #2c3e50;
+        }
+        
+        .format-selector select {
+            padding: 10px 15px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+            cursor: pointer;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+        
+        .format-selector select:focus {
+            outline: none;
+            border-color: #2980b9;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .file-input { 
+            margin: 20px 0; 
+        }
+        
+        .btn { 
+            background: #3498db; 
+            color: white; 
+            padding: 14px 30px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn:hover { 
+            background: #2980b9; 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn:disabled { 
+            background: #bdc3c7; 
+            cursor: not-allowed; 
+            transform: none; 
+            box-shadow: none;
+        }
+        
+        .btn-success { 
+            background: #27ae60; 
+            box-shadow: 0 4px 6px rgba(39, 174, 96, 0.2);
+        }
+        
+        .btn-success:hover { 
+            background: #219653; 
+            box-shadow: 0 6px 12px rgba(39, 174, 96, 0.3);
+        }
+        
+        .file-list { 
+            max-height: 200px; 
+            overflow-y: auto; 
+            margin: 20px 0; 
+            border: 1px solid #eaeaea; 
+            border-radius: 8px; 
+            padding: 15px; 
+            background: white;
+        }
+        
+        .file-item { 
+            padding: 12px; 
+            border-bottom: 1px solid #f0f0f0; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            transition: background 0.2s ease;
+        }
+        
+        .file-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .file-item:last-child { 
+            border-bottom: none; 
+        }
+        
+        .file-icon { 
+            font-size: 1.2em;
+        }
+        
+        .file-type { 
+            font-size: 12px; 
+            color: #7f8c8d; 
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        
+        .requirements { 
+            background: #f8f9fa; 
+            border-radius: 8px; 
+            padding: 20px; 
+            margin: 20px 0; 
+            border-left: 4px solid #3498db;
+        }
+        
+        .requirements h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .requirement-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin: 10px 0; 
+            padding: 8px 0;
+        }
+        
+        .requirement-met { 
+            color: #27ae60; 
+        }
+        
+        .requirement-missing { 
+            color: #e74c3c; 
+        }
+        
+        .progress-container { 
+            display: none; 
+            margin: 25px 0; 
+        }
+        
+        .progress-bar { 
+            width: 100%; 
+            height: 12px; 
+            background: #ecf0f1; 
+            border-radius: 10px; 
+            overflow: hidden; 
+        }
+        
+        .progress-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #27ae60, #2ecc71); 
+            width: 0%; 
+            transition: width 0.5s ease; 
+            border-radius: 10px;
+        }
+        
+        .progress-text { 
+            text-align: center; 
+            margin-top: 12px; 
+            color: #27ae60; 
+            font-weight: bold; 
+            font-size: 16px; 
+        }
+        
+        .file-info { 
+            margin-top: 30px; 
+            padding: 20px; 
+            background: #f8f9fa; 
+            border-radius: 10px; 
+            border-left: 4px solid #3498db; 
+        }
+        
+        .file-info h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin: 20px 0; 
+        }
+        
+        .stat-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-top: 4px solid #3498db;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number { 
+            font-size: 28px; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            margin-bottom: 5px;
+        }
+        
+        .stat-label { 
+            font-size: 13px; 
+            color: #7f8c8d; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .flash-messages { 
+            margin-bottom: 25px; 
+        }
+        
+        .flash-message { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            font-weight: 500;
+        }
+        
+        .flash-error { 
+            background: #f8d7da; 
+            border: 1px solid #f5c6cb; 
+            color: #721c24; 
+        }
+        
+        .flash-info { 
+            background: #d1ecf1; 
+            border: 1px solid #bee5eb; 
+            color: #0c5460; 
+        }
+        
+        .flash-success { 
+            background: #d4edda; 
+            border: 1px solid #c3e6cb; 
+            color: #155724; 
+        }
+        
+        .flash-warning { 
+            background: #fff3cd; 
+            border: 1px solid #ffeaa7; 
+            color: #856404; 
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin-top: 70px;
+            }
+            
+            .upload-area {
+                padding: 25px;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="menu-button">
+        <a href="/" onclick="clearBeforeNavigate()"><i class="fas fa-home"></i> Menú Principal</a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Consolidador HIS MINSA</h1>
+            <div class="subtitle">Optimizado para máximo rendimiento</div>
+        </div>
+        
+        <div class="instructions">
+            <h3>Instrucciones:</h3>
+            <p><strong>Archivos .ZIP requeridos:</strong></p>
+            <ul>
+                <li><code>tramaxxx.zip</code> → Múltiples NominalTrama.csv (OBLIGATORIO)</li>
+                <li><code>maestropacientexxx.zip</code> → MaestroPaciente.csv</li>
+                <li><code>maestropersonalxxxx.zip</code> → MaestroPersonal.csv</li>
+                <li><code>maestroregistradorxxx.zip</code> → MaestroRegistrador.csv</li>
+            </ul>
+            <p><strong>Nota:</strong> El sistema procesará automáticamente los archivos CSV dentro de los ZIPs.</p>
+        </div>
+
+        <div class="flash-messages" id="flashMessages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <h3>Arrastra y suelta tus archivos ZIP</h3>
+            <p>o haz clic para seleccionar</p>
+            
+            <!-- SELECTOR DE FORMATO DE EXPORTACIÓN -->
+            <div class="format-selector">
+                <label for="export_format">Formato de exportación:</label>
+                <select class="form-control" id="export_format" name="export_format">
+                    <option value="csv">CSV (Más rápido para validación)</option>
+                    <option value="xlsx">Excel (Formato estándar)</option>
+                </select>
+            </div>
+
+            <div class="file-input">
+                <input type="file" name="files[]" multiple accept=".zip" id="fileInput" style="display: none;">
+                <button type="button" class="btn" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-folder-open"></i> Seleccionar Archivos
+                </button>
+            </div>
+            <div id="fileList" class="file-list"></div>
+            
+            <div class="requirements" id="requirements">
+                <h4>Verificación de archivos:</h4>
+                <div class="requirement-item">
+                    <i class="fas fa-times-circle requirement-missing" id="tramaIcon"></i>
+                    <span id="tramaText">Archivo Trama/Plano (obligatorio)</span>
+                </div>
+                <div class="requirement-item">
+                    <i class="fas fa-info-circle requirement-missing" id="pacienteIcon"></i>
+                    <span id="pacienteText">Archivo Paciente (opcional)</span>
+                </div>
+                <div class="requirement-item">
+                    <i class="fas fa-info-circle requirement-missing" id="personalIcon"></i>
+                    <span id="personalText">Archivo Personal (opcional)</span>
+                </div>
+                <div class="requirement-item">
+                    <i class="fas fa-info-circle requirement-missing" id="registradorIcon"></i>
+                    <span id="registradorText">Archivo Registrador (opcional)</span>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Iniciando...</div>
+            </div>
+
+            <button type="button" class="btn" id="submitBtn" disabled>
+                <i class="fas fa-cogs"></i> Iniciar Consolidación
+            </button>
+        </div>
+
+        <div class="file-info">
+            <h4>Resumen de archivos detectados:</h4>
+            <div class="stats" id="statsContainer">
+                <div class="stat-card">
+                    <div class="stat-number" id="tramaCount">0</div>
+                    <div class="stat-label">Archivos Trama</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pacienteCount">0</div>
+                    <div class="stat-label">Archivos Paciente</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="personalCount">0</div>
+                    <div class="stat-label">Archivos Personal</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="registradorCount">0</div>
+                    <div class="stat-label">Archivos Registrador</div>
+                </div>
+            </div>
+            <div id="fileInfo">No se han seleccionado archivos</div>
+        </div>
+    </div>
+
+    <script>
+        let fileAnalysis = { trama: 0, paciente: 0, personal: 0, registrador: 0, otros: 0 };
+
+        document.getElementById('fileInput').addEventListener('change', updateFileList);
+        
+        function updateFileList() {
+            const input = document.getElementById('fileInput');
+            const list = document.getElementById('fileList');
+            const info = document.getElementById('fileInfo');
+            const btn = document.getElementById('submitBtn');
+            list.innerHTML = ''; info.innerHTML = '';
+            fileAnalysis = { trama: 0, paciente: 0, personal: 0, registrador: 0, otros: 0 };
+
+            if (input.files.length > 0) {
+                let details = '';
+                for (let file of input.files) {
+                    const name = file.name.toLowerCase();
+                    let type = 'otros', icon = 'fa-file-archive', color = '#7f8c8d';
+
+                    if (name.includes('trama') || name.includes('nominal') || name.includes('plano')) {
+                        type = 'trama'; icon = 'fa-database'; color = '#e74c3c'; fileAnalysis.trama++;
+                    } else if (name.includes('paciente')) {
+                        type = 'paciente'; icon = 'fa-user'; color = '#3498db'; fileAnalysis.paciente++;
+                    } else if (name.includes('personal')) {
+                        type = 'personal'; icon = 'fa-user-md'; color = '#9b59b6'; fileAnalysis.personal++;
+                    } else if (name.includes('registrador')) {
+                        type = 'registrador'; icon = 'fa-user-edit'; color = '#f39c12'; fileAnalysis.registrador++;
+                    } else fileAnalysis.otros++;
+
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `<i class="fas ${icon} file-icon" style="color:${color}"></i>
+                                      <div style="flex-grow: 1;">
+                                        <div style="font-weight: 500;">${file.name}</div>
+                                        <div class="file-type">Tipo: ${type.toUpperCase()}</div>
+                                      </div>`;
+                    list.appendChild(item);
+                    details += `<div style="margin-bottom: 8px;"><i class="fas ${icon}" style="color:${color}; margin-right: 8px;"></i> ${type.charAt(0).toUpperCase() + type.slice(1)}: <strong>${file.name}</strong></div>`;
+                }
+
+                ['trama','paciente','personal','registrador'].forEach(t => 
+                    document.getElementById(t + 'Count').textContent = fileAnalysis[t]
+                );
+                updateRequirements();
+                info.innerHTML = details;
+
+                btn.disabled = fileAnalysis.trama === 0;
+                btn.classList.toggle('btn-success', !btn.disabled);
+            } else {
+                btn.disabled = true; btn.classList.remove('btn-success');
+                info.innerHTML = '<div>No se han seleccionado archivos</div>';
+                resetRequirements(); resetStats();
+            }
+        }
+
+        function updateRequirements() {
+            const types = ['trama', 'paciente', 'personal', 'registrador'];
+            types.forEach(type => {
+                const hasFile = fileAnalysis[type] > 0;
+                const iconEl = document.getElementById(type + 'Icon');
+                const textEl = document.getElementById(type + 'Text');
+                if (hasFile) {
+                    iconEl.className = 'fas fa-check-circle requirement-met';
+                    textEl.innerHTML = `<strong>Archivo ${type.charAt(0).toUpperCase() + type.slice(1)} Check</strong>`;
+                } else {
+                    iconEl.className = type === 'trama' ? 'fas fa-times-circle requirement-missing' : 'fas fa-info-circle requirement-missing';
+                    textEl.textContent = `Archivo ${type.charAt(0).toUpperCase() + type.slice(1)} (${type === 'trama' ? 'obligatorio' : 'opcional'})`;
+                }
+            });
+        }
+
+        function resetRequirements() {
+            const labels = ['Archivo Trama/Plano (obligatorio)', 'Archivo Paciente (opcional)', 'Archivo Personal (opcional)', 'Archivo Registrador (opcional)'];
+            ['trama','paciente','personal','registrador'].forEach((t, i) => {
+                document.getElementById(t + 'Icon').className = i === 0 ? 'fas fa-times-circle requirement-missing' : 'fas fa-info-circle requirement-missing';
+                document.getElementById(t + 'Text').textContent = labels[i];
+            });
+        }
+
+        function resetStats() {
+            ['trama','paciente','personal','registrador'].forEach(t => document.getElementById(t + 'Count').textContent = '0');
+        }
+
+        const uploadArea = document.getElementById('uploadArea');
+        ['dragover', 'dragenter'].forEach(e => uploadArea.addEventListener(e, ev => { 
+            ev.preventDefault(); 
+            uploadArea.classList.add('dragover'); 
+        }));
+        ['dragleave', 'dragend', 'drop'].forEach(e => uploadArea.addEventListener(e, ev => { 
+            ev.preventDefault(); 
+            uploadArea.classList.remove('dragover'); 
+        }));
+        uploadArea.addEventListener('drop', e => {
+            document.getElementById('fileInput').files = e.dataTransfer.files;
+            updateFileList();
+        });
+
+        // === ENVÍO CON DESCARGA REAL (SIN DUPLICADOS) ===
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            if (document.getElementById('submitBtn').disabled) return;
+
+            const formData = new FormData();
+            for (let file of document.getElementById('fileInput').files) {
+                formData.append('files[]', file);
+            }
+
+            // AGREGAR FORMATO DE EXPORTACIÓN AL FORM DATA
+            const exportFormat = document.getElementById('export_format').value;
+            formData.append('export_format', exportFormat);
+
+            const btn = document.getElementById('submitBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            progressContainer.style.display = 'block';
+            progressText.textContent = 'Iniciando...';
+
+            let progress = 0;
+            const steps = [10, 30, 50, 70, 85, 95];
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < steps.length) {
+                    progress = steps[i++];
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = `Procesando... ${progress}%`;
+                }
+            }, 1000);
+
+            try {
+                const response = await fetch('/upload_consolidar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(interval);
+                progressFill.style.width = '100%';
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Obtener nombre del archivo según el formato
+                    const filename = exportFormat === 'csv' ? 'Consolidado_Final.csv' : 'Consolidado_Final.xlsx';
+                    a.download = filename;
+                    
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+
+                    progressText.innerHTML = '<strong><i class="fas fa-check-circle"></i> PROCESADO 100% - ARCHIVO DESCARGADO</strong>';
+                    btn.innerHTML = '<i class="fas fa-check"></i> Completado';
+                    btn.disabled = true;
+                } else {
+                    throw new Error('Error del servidor');
+                }
+            } catch (error) {
+                clearInterval(interval);
+                progressFill.style.width = '0%';
+                progressText.textContent = 'Error en la consolidación';
+                alert('Error: ' + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-cogs"></i> Iniciar Consolidación';
+            }
+        });
+
+        function clearBeforeNavigate() {
+            document.getElementById('fileInput').value = '';
+            updateFileList();
+        }
+
+        document.addEventListener('DOMContentLoaded', updateFileList);
+    </script>
+</body>
+</html>

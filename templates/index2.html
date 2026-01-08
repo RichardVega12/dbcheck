@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validador de Errores - HIS MINSA</title>
+    <style>
+        /* Reset y estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        /* Botón de menú principal */
+        .menu-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        
+        .menu-button a {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .menu-button a:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 80px auto 0;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        /* Sección de carga de archivo */
+        .upload-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .upload-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .upload-section p {
+            color: #5a6c7d;
+            margin-bottom: 25px;
+            font-size: 1.05em;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-button {
+            background: white;
+            border: 2px dashed #3498db;
+            border-radius: 12px;
+            padding: 25px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #3498db;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            min-width: 300px;
+            box-shadow: 0 4px 6px rgba(52, 152, 219, 0.1);
+        }
+
+        .file-input-button:hover {
+            background: #e8f4fc;
+            border-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(52, 152, 219, 0.15);
+        }
+
+        .file-input-button i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .progress-container {
+            margin: 25px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 12px;
+            color: #27ae60;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* Sección de filtros */
+        .filter-section {
+            margin: 30px 0;
+            display: none;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .filter-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .filter-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            background: white;
+            color: #2c3e50;
+            border: 2px solid #e74c3c;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(231, 76, 60, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .filter-btn:hover {
+            background: #e74c3c;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(231, 76, 60, 0.2);
+        }
+
+        .filter-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Sección de descarga */
+        .download-section {
+            text-align: center;
+            margin: 30px 0;
+            display: none;
+        }
+
+        .download-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 16px 35px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 12px rgba(39, 174, 96, 0.2);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-btn:hover {
+            background: #219653;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Sección de tabla */
+        .table-section {
+            margin: 30px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #eaeaea;
+        }
+
+        .table-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .table-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .table-info {
+            padding: 18px 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+            color: #5a6c7d;
+            font-weight: 500;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow: auto;
+            position: relative;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            color: #2c3e50;
+            font-weight: 600;
+            padding: 14px 10px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            min-width: 100px;
+        }
+
+        .data-table td {
+            padding: 12px 10px;
+            border: 1px solid #dee2e6;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #495057;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .data-table tr:hover {
+            background-color: #e3f2fd;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            color: #bdc3c7;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #7f8c8d;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .empty-state p {
+            font-size: 1.05rem;
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #27ae60;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #e74c3c;
+        }
+
+        .alert-info {
+            background: #cce7ff;
+            color: #0c5460;
+            border-color: #3498db;
+        }
+
+        /* Overlay de carga */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            min-width: 300px;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Estilo para la columna de errores */
+        .error-column {
+            background-color: #ffebee !important;
+            color: #c62828;
+            font-weight: 600;
+        }
+
+        /* Media Queries para responsividad */
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin: 70px 10px 0;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .filter-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-btn {
+                min-width: 100%;
+            }
+
+            .data-table {
+                font-size: 12px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 6px;
+                min-width: 80px;
+            }
+
+            .file-input-button {
+                min-width: 250px;
+                padding: 20px 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            
+            .upload-section,
+            .filter-section {
+                padding: 20px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Botón de menú principal -->
+    <div class="menu-button">
+        <a href="/">
+            <i class="fas fa-home"></i> Menú Principal
+        </a>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-search-medical"></i> Validador de Errores HIS MINSA</h1>
+            <p>Detecta y analiza errores en los datos de salud de diferentes servicios</p>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <h3><i class="fas fa-file-upload"></i> Cargar Archivo Consolidado</h3>
+            <p>Selecciona un archivo Excel (.xlsx) o CSV (.csv) para comenzar el análisis de errores</p>
+
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.csv">
+                <div class="file-input-button">
+                    <i class="fas fa-file-excel"></i>
+                    Seleccionar archivo (Excel o CSV)
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div id="progressText">Cargando archivo...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="filter-section" id="filterSection">
+            <h2><i class="fas fa-filter"></i> Tipos de Errores Detectados</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn" onclick="applyFilter('generales')">
+                    <i class="fas fa-exclamation-triangle"></i> Errores Generales
+                </button>
+                <button class="filter-btn" onclick="applyFilter('adolescente')">
+                    <i class="fas fa-user-friends"></i> Adolescente
+                </button>
+                <button class="filter-btn" onclick="applyFilter('obstetricia')">
+                    <i class="fas fa-baby"></i> Obstetricia
+                </button>
+                <button class="filter-btn" onclick="applyFilter('inmunizaciones')">
+                    <i class="fas fa-syringe"></i> Inmunizaciones
+                </button>
+                <button class="filter-btn" onclick="applyFilter('cred')">
+                    <i class="fas fa-heartbeat"></i> CRED
+                </button>
+                <button class="filter-btn" onclick="applyFilter('dental')">
+                    <i class="fas fa-tooth"></i> Dental
+                </button>
+                <button class="filter-btn" onclick="applyFilter('nutricion')">
+                    <i class="fas fa-apple-alt"></i> Nutrición
+                </button>
+                <button class="filter-btn" onclick="applyFilter('psicologia')">
+                    <i class="fas fa-brain"></i> Psicología
+                </button>
+                <button class="filter-btn" onclick="applyFilter('Error_secuencia_Dx')">
+                    <i class="fas fa-random"></i> Secuencia Dx
+                </button>
+            </div>
+        </div>
+
+        <div class="download-section" id="downloadSection">
+            <button class="download-btn" onclick="downloadExcel()">
+                <i class="fas fa-download"></i> Descargar Excel con Errores
+            </button>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h3 id="tableTitle">Datos Cargados</h3>
+            </div>
+            <div class="table-info" id="tableInfo">
+                Selecciona un archivo Excel o CSV para comenzar
+            </div>
+            <div class="table-container" id="tableContainer">
+                <div class="empty-state">
+                    <i class="fas fa-table"></i>
+                    <h3>No hay datos para mostrar</h3>
+                    <p>Carga un archivo Excel o CSV para ver los datos aquí</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div id="loadingText">Procesando...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let isFiltered = false;
+        let consolidationMode = false;
+
+        // Verificar si viene de consolidación
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('source');
+            
+            if (source === 'consolidacion') {
+                consolidationMode = true;
+                loadFromConsolidation();
+            }
+        });
+
+        // Event listener para el input de archivo
+        document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+
+        /**
+         * Carga datos directamente desde la consolidación
+         */
+        async function loadFromConsolidation() {
+            showLoading('Cargando datos consolidados...');
+            
+            try {
+                const response = await fetch('/validar_directo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                hideLoading();
+                
+                if (result.success) {
+                    currentData = result.data;
+                    isFiltered = false;
+                    displayTable(result.data, 'Datos Consolidados (Primeras 100 Filas)');
+                    document.getElementById('filterSection').style.display = 'block';
+                    document.getElementById('downloadSection').style.display = 'none';
+                    
+                    // Ocultar sección de carga de archivo
+                    document.getElementById('uploadSection').style.display = 'none';
+                    
+                    showAlert('Datos consolidados cargados exitosamente', 'success');
+                } else {
+                    showAlert(result.error || 'Error al cargar datos consolidados', 'error');
+                    // Mostrar sección de carga normal como fallback
+                    document.getElementById('uploadSection').style.display = 'block';
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                showAlert('Error de conexión al cargar datos consolidados', 'error');
+                document.getElementById('uploadSection').style.display = 'block';
+            }
+        }
+
+        /**
+         * Muestra una alerta en la interfaz.
+         * @param {string} message - El mensaje a mostrar.
+         * @param {string} type - Tipo de alerta ('success', 'error', 'info').
+         */
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+
+            // Limpiar alertas previas y añadir la nueva
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+
+            // Ocultar la alerta automáticamente después de 5 segundos
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        /**
+         * Muestra el overlay de carga.
+         * @param {string} text - Texto a mostrar en el spinner.
+         */
+        function showLoading(text = 'Procesando...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        /**
+         * Oculta el overlay de carga.
+         */
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        /**
+         * Actualiza la barra de progreso.
+         * @param {number} percent - Porcentaje de progreso (0-100).
+         * @param {string} text - Texto descriptivo del progreso.
+         */
+        function updateProgress(percent, text) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            progressContainer.style.display = 'block';
+            progressFill.style.width = percent + '%';
+            progressText.textContent = text;
+
+            if (percent >= 100) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 1000);
+            }
+        }
+
+        /**
+         * Maneja la carga del archivo Excel o CSV.
+         * @param {Event} event - El evento de cambio del input de archivo.
+         */
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validar tipo de archivo (aceptar tanto Excel como CSV)
+            if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.csv')) {
+                showAlert('Por favor selecciona un archivo Excel (.xlsx) o CSV (.csv)', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showLoading('Cargando archivo...');
+
+                // Simular un progreso más realista si la carga es rápida
+                updateProgress(0, 'Iniciando carga...');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                updateProgress(20, 'Subiendo archivo...');
+                const response = await fetch('/upload_validar', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                updateProgress(80, 'Procesando datos...');
+                const result = await response.json();
+                
+                updateProgress(100, 'Carga completada');
+                hideLoading();
+
+                if (result.success) {
+                    currentData = result.data;
+                    isFiltered = false;
+                    displayTable(result.data, 'Datos Cargados (Primeras 100 Filas)');
+                    document.getElementById('filterSection').style.display = 'block';
+                    document.getElementById('downloadSection').style.display = 'none';
+                    showAlert(result.message, 'success');
+                } else {
+                    showAlert(result.error || 'Error al cargar el archivo', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                hideLoading();
+                showAlert('Error de conexión con el servidor. Inténtalo de nuevo.', 'error');
+                updateProgress(0, '');
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        }
+
+        /**
+         * Aplica un filtro de errores al DataFrame cargado.
+         * @param {string} filterType - Tipo de filtro a aplicar ('generales', 'adolescente', etc.).
+         */
+        async function applyFilter(filterType) {
+            if (!currentData) {
+                showAlert('Primero debes cargar un archivo Excel o CSV.', 'error');
+                return;
+            }
+
+            showLoading(`Aplicando filtro de errores de ${capitalizeFirst(filterType)}...`);
+
+            try {
+                const response = await fetch(`/filter/${filterType}`);
+                const result = await response.json();
+
+                hideLoading();
+
+                if (result.success) {
+                    if (result.data.total_records === 0) {
+                        displayEmptyState('No se encontraron errores con este filtro.');
+                        document.getElementById('downloadSection').style.display = 'none';
+                        showAlert('No se encontraron errores con el filtro aplicado.', 'info');
+                    } else {
+                        displayTable(result.data, `Errores de ${capitalizeFirst(filterType)}`);
+                        document.getElementById('downloadSection').style.display = 'block';
+                        isFiltered = true;
+                        showAlert(result.message, 'success');
+                    }
+                } else {
+                    showAlert(result.error || 'Error al aplicar filtro.', 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                showAlert('Error de conexión al servidor al aplicar filtro. Inténtalo de nuevo.', 'error');
+            }
+        }
+
+        /**
+         * Muestra los datos en la tabla HTML.
+         * @param {object} data - Objeto con 'columns' (nombres de columnas) y 'data' (filas de datos).
+         * @param {string} title - Título para la tabla.
+         */
+        function displayTable(data, title) {
+            document.getElementById('tableTitle').textContent = title;
+            document.getElementById('tableInfo').textContent =
+                `Mostrando ${data.shown_records} de ${data.total_records} registros totales`;
+
+            const tableContainer = document.getElementById('tableContainer');
+
+            if (data.data.length === 0) {
+                displayEmptyState('No hay datos para mostrar');
+                return;
+            }
+
+            let tableHTML = '<table class="data-table"><thead><tr>';
+
+            // Encabezados de la tabla
+            data.columns.forEach(col => {
+                const isErrorColumn = col === 'Error';
+                tableHTML += `<th ${isErrorColumn ? 'class="error-column"' : ''}>${col}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            // Filas de datos
+            data.data.forEach(row => {
+                tableHTML += '<tr>';
+                row.forEach((cell, index) => {
+                    const isErrorColumn = data.columns[index] === 'Error';
+                    const cellValue = cell || '';
+                    tableHTML += `<td ${isErrorColumn ? 'class="error-column"' : ''} title="${cellValue}">${cellValue}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        /**
+         * Muestra un estado vacío en la tabla.
+         * @param {string} message - Mensaje a mostrar en el estado vacío.
+         */
+        function displayEmptyState(message) {
+            const tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h3>${message}</h3>
+                    <p>Intenta con otro filtro o carga un nuevo archivo.</p>
+                </div>
+            `;
+            document.getElementById('tableTitle').textContent = 'Resultados';
+            document.getElementById('tableInfo').textContent = '';
+        }
+
+        /**
+         * Descarga el archivo Excel con los datos filtrados.
+         */
+        async function downloadExcel() {
+            showLoading('Preparando descarga...');
+            try {
+                const response = await fetch('/download_errores');
+                hideLoading();
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'ErroresFiltrados.xlsx';
+
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    showAlert('Archivo descargado exitosamente.', 'success');
+                } else {
+                    const errorText = await response.text();
+                    const errorObj = JSON.parse(errorText);
+                    showAlert(errorObj.error || 'Error al descargar el archivo. No hay datos filtrados.', 'error');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                showAlert('Error de conexión al servidor al descargar. Inténtalo de nuevo.', 'error');
+            }
+        }
+
+        /**
+         * Capitaliza la primera letra de una cadena.
+         * @param {string} string - La cadena a capitalizar.
+         * @returns {string} La cadena con la primera letra capitalizada.
+         */
+        function capitalizeFirst(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+    </script>
+</body>
+</html>

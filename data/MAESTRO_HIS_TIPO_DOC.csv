@@ -1,0 +1,7 @@
+Id_Tipo_Documento,Abrev_Tipo_Doc,Descripcion_Tipo_Documento
+1,DNI,Documento Nacional de Identidad
+2,CE,Carnet de Extranjería
+3,PASS,Pasaporte
+4,DIE,Documento de Identidad Extranjero
+5,S/ DOCUMENTO,No sabe
+6,CNV,Certificado de Nacido Vivo
