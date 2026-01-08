@@ -1,21 +1,25 @@
 FROM python:3.11-slim
 
-# Instala dependencias del sistema (incluyendo las necesarias para PyArrow)
+# Instala dependencias del sistema (incluyendo las necesarias para PyArrow y build)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copia requirements
+# Copia requirements y instala dependencias
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el código
+# Copia todo el código fuente
 COPY . /app
+
+# Cambia el directorio de trabajo (WORKDIR) a /app
 WORKDIR /app
 
-# Variables de entorno para desarrollo
-ENV FLASK_DEBUG=true
-ENV FLASK_ENV=development
+# Configuración para producción en Render (no necesitas FLASK_DEBUG ni FLASK_ENV aquí)
+# Render siempre define PORT, así que usamos directamente $PORT
 
-# Comando condicional: Desarrollo con auto-reload vs Producción con Gunicorn
-CMD ["sh", "-c", "if [ \"$FLASK_DEBUG\" = \"true\" ]; then python -m flask run --host=0.0.0.0 --port=5000 --reload; else gunicorn app_unificado:app --bind 0.0.0.0:5000 --workers 2 --threads 4; fi"]
+# Comando de inicio: SIEMPRE producción con Gunicorn (mejor para Render)
+# -w 2 → 2 workers (suficiente para plan free, ajusta si usas plan pagado)
+# --threads 4 → threads por worker (opcional, pero ayuda con I/O)
+# --bind 0.0.0.0:$PORT → OBLIGATORIO para Render
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "2", "--threads", "4", "app_unificado:app"]
