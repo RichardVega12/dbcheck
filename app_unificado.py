@@ -22,7 +22,7 @@ app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key_here'
 
 # Directorios
-UPLOAD_FOLDER = '/app/uploads'
+UPLOAD_FOLDER = 'uploads'
 DATA_FOLDER = '/app/data'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DATA_FOLDER, exist_ok=True)
